@@ -30,8 +30,14 @@ class StreamConn(object):
             self.loop = asyncio.new_event_loop()
             asyncio.set_event_loop(self.loop)
 
+    async def _keep_alive(self, ws):
+        while ws.open:
+            await ws.ping()
+            await asyncio.sleep(2)
+
     async def _connect(self):
         ws = await websockets.connect(self._endpoint)
+        asyncio.ensure_future(self._keep_alive(ws))
         await ws.send(json.dumps({
             'action': 'authenticate',
             'data': {
